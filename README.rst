@@ -2,15 +2,12 @@
 Distributed-Algorithms
 ======================
 
-
-Add a short description here!
-
+Abstractions of components of a distributed system to simulate implementations of distributed algorithms. 
 
 Description
 ===========
 
-A longer description of your project goes here...
-
+The project aims to give a framework with proper abstractions of components in distributed systems like process, channel, messages, etc. to make it convenient to experiment with distributed algorithms.
 
 Note
 ====
