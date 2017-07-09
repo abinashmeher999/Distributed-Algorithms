@@ -5,6 +5,7 @@ from random import random
 class Channel:
     def __init__(self, delay_mean=100, delay_std_dev=10, min_delay=1, max_delay=500):
         """
+        All units are in milliseconds
         :param delay_mean: mean delay for a message to reach from in end to out end
         :param delay_std_dev: variation in delay for a message to reach fro in end to out end
         :param min_delay: guarantee that the delay won't be less than this value
@@ -23,9 +24,10 @@ class Channel:
         :return:
         """
         self.in_transit.add(message)
+        # delay time in milliseconds
         delay_time = random.gauss(self.delay_mean, self.delay_std_dev)
         clamped_delay_time = min(self.max_delay, max(self.min_delay, delay_time))
-        asyncio.sleep(clamped_delay_time)
+        asyncio.sleep(clamped_delay_time / 1000)  # asyncio.sleep expects in seconds
         self.in_transit.remove(message)
         self.reached.add(message)
 
