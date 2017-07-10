@@ -14,18 +14,27 @@ class Simulation:
 
         for n, neighbors_dict in self.graph.adjacency_iter():
             if n not in self.process_map:
-                self.process_map[n] = process_type()
-                self.node_map[self.process_map[n].id] = n
+                process_n = process_type()
+                self.process_map[n] = process_n
+                self.node_map[process_n.id] = n
+            else:
+                process_n = self.process_map[n]
 
             for neighbor, edge_attr in neighbors_dict.items():
                 if neighbor not in self.process_map:
-                    self.process_map[neighbor] = process_type()
-                    self.node_map[self.process_map[neighbor].id] = neighbor
+                    process_nbr = process_type()
+                    self.process_map[neighbor] = process_nbr
+                    self.node_map[process_nbr.id] = neighbor
+                else:
+                    process_nbr = self.process_map[neighbor]
 
-                channel = channel_type()
+                channel = channel_type(
+                    {process_n},
+                    {process_nbr}
+                )
                 self.channel_map[(n, neighbor)] = channel
-                self.process_map[n].out_channel.append(channel)
-                self.process_map[neighbor].in_channel.append(channel)
+                process_n.out_channel.append(channel)
+                process_nbr.in_channel.append(channel)
 
     def run(self):
         # starts the simulation
