@@ -4,16 +4,12 @@ import random
 
 class UnreliableDelayedChannel:
     def __init__(self,
-                 in_end=None,
-                 out_end=None,
                  delay_mean=100,
                  delay_std_dev=10,
                  min_delay=1,
                  max_delay=500,
                  reliability=0.9):
         """
-        :param in_end: The set of processes that are sending into the channel
-        :param out_end: The set of processes that are receiving the messages from the channel
         Every message sent into the channel is sent individually to all the receiving processes.
         All units are in milliseconds
         :param delay_mean: mean delay for a message to reach from in end to out end
@@ -22,8 +18,8 @@ class UnreliableDelayedChannel:
         :param max_delay: guarantee that the delay won't be more than this value
         :param reliability: The reliability with which a message is delivered. [0.0, 1.0]
         """
-        self.in_end = in_end or set()
-        self.out_end = out_end or set()
+        self.__in_end = None  # The process sending messages into the channel
+        self.__out_end = None  # The process receiving messages from the channel
         self.delay_mean = delay_mean
         self.delay_std_dev = delay_std_dev
         self.in_transit = set()
@@ -31,6 +27,19 @@ class UnreliableDelayedChannel:
         self.min_delay = min_delay
         self.max_delay = max_delay
         self.reliability = reliability
+        self.__back = None  # The channel that is the opposite direction of this channel
+
+    @property
+    def in_end(self):
+        return self.__in_end
+
+    @property
+    def out_end(self):
+        return self.__out_end
+
+    @property
+    def back(self):
+        return self.__back
 
     async def __deliver(self, message, process):
         """
@@ -49,15 +58,12 @@ class UnreliableDelayedChannel:
         process.on_receive(message)
 
     async def send(self, message):
-        async for process in self.out_end:
-            self.__deliver(message, process)
+        self.__deliver(message, self.out_end)
 
 
 class DelayedChannel(UnreliableDelayedChannel):
-    def __init__(self, in_end=None, out_end=None, delay_mean=100, delay_std_dev=10, min_delay=1, max_delay=500):
+    def __init__(self, delay_mean=100, delay_std_dev=10, min_delay=1, max_delay=500):
         super(DelayedChannel, self).__init__(
-            in_end=in_end,
-            out_end=out_end,
             delay_mean=delay_mean,
             delay_std_dev=delay_std_dev,
             min_delay=min_delay,
@@ -67,10 +73,8 @@ class DelayedChannel(UnreliableDelayedChannel):
 
 
 class UnreliableChannel(UnreliableDelayedChannel):
-    def __init__(self, in_end=None, out_end=None, reliability=0.9):
+    def __init__(self, reliability=0.9):
         super(UnreliableChannel, self).__init__(
-            in_end=in_end,
-            out_end=out_end,
             delay_mean=0,
             delay_std_dev=0,
             min_delay=0,
@@ -80,8 +84,8 @@ class UnreliableChannel(UnreliableDelayedChannel):
 
 
 class Channel(UnreliableDelayedChannel):
-    def __init__(self, in_end=None, out_end=None):
-        super(Channel, self).__init__(in_end, out_end, 0, 0, 0, 0, reliability=1.0)
+    def __init__(self):
+        super(Channel, self).__init__(0, 0, 0, 0, reliability=1.0)
 
     async def __deliver(self, message, process):
         process.on_receive(message)

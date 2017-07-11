@@ -28,11 +28,15 @@ class Simulation:
                 else:
                     process_nbr = self.process_map[neighbor]
 
-                channel = channel_type(
-                    {process_n},
-                    {process_nbr}
-                )
+                channel = channel_type()
+                channel.__in_end = process_n
+                channel.__out_end = process_nbr
                 self.channel_map[(n, neighbor)] = channel
+                if (neighbor, n) in self.channel_map:
+                    rev_channel = self.channel_map[(neighbor, n)]
+                    channel.__back = rev_channel
+                    rev_channel.__back = channel
+
                 process_n.out_channel.append(channel)
                 process_nbr.in_channel.append(channel)
 
