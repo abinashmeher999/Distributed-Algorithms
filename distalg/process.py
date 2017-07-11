@@ -7,6 +7,9 @@ class Process(object):
         self.in_channels = []
         self.out_channels = []
 
+    async def start(self):
+        pass
+
     async def on_receive(self, msg):
         pass
 

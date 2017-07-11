@@ -1,6 +1,7 @@
+import asyncio
 import networkx as nx
-from process import Process
-from channel import Channel
+from distalg.process import Process
+from distalg.channel import Channel
 
 
 class Simulation:
@@ -16,7 +17,7 @@ class Simulation:
             if n not in self.process_map:
                 process_n = process_type()
                 self.process_map[n] = process_n
-                self.node_map[process_n.id] = n
+                self.node_map[process_n] = n
             else:
                 process_n = self.process_map[n]
 
@@ -24,7 +25,7 @@ class Simulation:
                 if neighbor not in self.process_map:
                     process_nbr = process_type()
                     self.process_map[neighbor] = process_nbr
-                    self.node_map[process_nbr.id] = neighbor
+                    self.node_map[process_nbr] = neighbor
                 else:
                     process_nbr = self.process_map[neighbor]
 
@@ -37,9 +38,13 @@ class Simulation:
                     channel.__back = rev_channel
                     rev_channel.__back = channel
 
-                process_n.out_channel.append(channel)
-                process_nbr.in_channel.append(channel)
+                process_n.out_channels.append(channel)
+                process_nbr.in_channels.append(channel)
+
+    async def start_all(self):
+        await asyncio.wait([process.start() for process in self.node_map])
 
     def run(self):
-        # starts the simulation
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.start_all())
         pass
