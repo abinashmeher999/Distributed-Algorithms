@@ -1,4 +1,7 @@
 import shortuuid
+from multipledispatch import dispatch
+from distalg.message import Message
+from distalg.channel import UnreliableDelayedChannel
 
 
 class Process(object):
@@ -10,7 +13,8 @@ class Process(object):
     async def start(self):
         pass
 
-    async def on_receive(self, msg):
+    @dispatch(Message, UnreliableDelayedChannel)
+    async def on_receive(self, msg, channel):
         pass
 
     @property
