@@ -18,8 +18,8 @@ class UnreliableDelayedChannel:
         :param max_delay: guarantee that the delay won't be more than this value
         :param reliability: The reliability with which a message is delivered. [0.0, 1.0]
         """
-        self.__in_end = None  # The process sending messages into the channel
-        self.__out_end = None  # The process receiving messages from the channel
+        self._in_end = None  # The process sending messages into the channel
+        self._out_end = None  # The process receiving messages from the channel
         self.delay_mean = delay_mean
         self.delay_std_dev = delay_std_dev
         self.in_transit = set()
@@ -27,19 +27,19 @@ class UnreliableDelayedChannel:
         self.min_delay = min_delay
         self.max_delay = max_delay
         self.reliability = reliability
-        self.__back = None  # The channel that is the opposite direction of this channel
+        self._back = None  # The channel that is the opposite direction of this channel
 
     @property
     def in_end(self):
-        return self.__in_end
+        return self._in_end
 
     @property
     def out_end(self):
-        return self.__out_end
+        return self._out_end
 
     @property
     def back(self):
-        return self.__back
+        return self._back
 
     async def __deliver(self, message, process):
         """
@@ -55,10 +55,10 @@ class UnreliableDelayedChannel:
         clamped_delay_time = min(self.max_delay, max(self.min_delay, delay_time))
         asyncio.sleep(clamped_delay_time / 1000)  # asyncio.sleep expects in seconds
         self.in_transit.remove(message)
-        process.on_receive(message)
+        await process.on_receive(message, self)
 
     async def send(self, message):
-        self.__deliver(message, self.out_end)
+        await self.__deliver(message, self.out_end)
 
 
 class DelayedChannel(UnreliableDelayedChannel):
@@ -88,7 +88,7 @@ class Channel(UnreliableDelayedChannel):
         super(Channel, self).__init__(0, 0, 0, 0, reliability=1.0)
 
     async def __deliver(self, message, process):
-        process.on_receive(message)
+        await process.on_receive(message, self)
 
 
 class UnreliableDelayedFIFOChannel(UnreliableDelayedChannel):

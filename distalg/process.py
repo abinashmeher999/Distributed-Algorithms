@@ -5,8 +5,8 @@ from distalg.channel import UnreliableDelayedChannel
 
 
 class Process(object):
-    def __init__(self):
-        self._id = shortuuid.uuid()
+    def __init__(self, pid=None):
+        self._id = pid or shortuuid.uuid()
         self.in_channels = []
         self.out_channels = []
 
@@ -19,7 +19,7 @@ class Process(object):
 
     @property
     def id(self):
-        return self._id
+        return str(self._id)
 
     def __eq__(self, other):
         return self.id == other.id

@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import asyncio
 import pytest
-import time
 
 from distalg.skeleton import fib
 import networkx as nx
@@ -36,43 +35,38 @@ class EchoToken(Message):
 
 
 class EchoProcess(Process):
-    def __init__(self):
-        super(EchoProcess, self).__init__()
+    def __init__(self, pid=None):
+        super(EchoProcess, self).__init__(pid=pid)
         self.father = None
         self.rec_p = 0
         self.is_initiator = False
         self.log = logging.getLogger('echo')
 
-    def start(self):
-        self.log.debug(self.id, 'started')
+    async def start(self):
+        self.log.debug(self.id + " started.")
         if self.is_initiator:
-            for channel in self.out_channels:
-                channel.send(EchoToken(self.id))
+            await asyncio.wait([channel.send(EchoToken(self.id)) for channel in self.out_channels])
 
     @dispatch(EchoToken, Channel)
-    def on_receive(self, msg, channel):
+    async def on_receive(self, msg, channel):
+        self.rec_p += 1
         if self.is_initiator:
             if self.rec_p == len(self.in_channels):
-                self.log.debug('Process:', self.id, ':', msg.value)
-            else:
-                self.rec_p += 1
+                self.log.debug('Process: ' + self.id + ' : ' + msg.value)
         else:
             if self.father is None:
                 self.father = channel.back
-                for ch in [ch for ch in self.out_channels if not self.father]:
-                    ch.send(EchoToken(msg.value))
-            if self.rec_p == len(self.out_channels):
-                self.log.debug('Process:', self.id, ':', msg.value)
-                self.father.send(EchoToken(msg.value))
-            else:
-                self.rec_p += 1
+                await asyncio.wait([ch.send(EchoToken(msg.value)) for ch in self.out_channels if ch is not self.father])
+            if self.rec_p == len(self.in_channels):
+                self.log.debug('Process: ' + self.id + ' : ' + msg.value)
+                await self.father.send(EchoToken(msg.value))
 
 
 def test_echo():
     graph = nx.hypercube_graph(4)  # 4 dimensional
-    sm = Simulation(embedding_graph=graph, process_type=Process, channel_type=Channel)
+    sm = Simulation(embedding_graph=graph, process_type=EchoProcess, channel_type=Channel)
     for a in sm.node_map:
         a.is_initiator = True
         break
+
     sm.run()
-    time.sleep(10)
