@@ -83,9 +83,9 @@ class UnreliableChannel(UnreliableDelayedChannel):
         )
 
 
-class Channel(UnreliableDelayedChannel):
+class Channel(DelayedChannel):
     def __init__(self):
-        super(Channel, self).__init__(0, 0, 0, 0, reliability=1.0)
+        super(Channel, self).__init__(0, 0, 0, 0)
 
     async def __deliver(self, message, process):
         await process.on_receive(message, self)
