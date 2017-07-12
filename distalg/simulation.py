@@ -44,7 +44,9 @@ class Simulation:
     async def start_all(self):
         await asyncio.wait([process.start() for process in self.node_map])
 
+    def processes_iter(self):
+        yield from self.node_map  # node map is a dict process: node, this iterates over all the keys i.e. processes
+
     def run(self):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self.start_all())
-        pass
