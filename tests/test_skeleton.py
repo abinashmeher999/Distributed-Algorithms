@@ -15,14 +15,6 @@ __copyright__ = "Abinash Meher"
 __license__ = "mit"
 
 
-def test_fib():
-    assert fib(1) == 1
-    assert fib(2) == 1
-    assert fib(7) == 13
-    with pytest.raises(AssertionError):
-        fib(-10)
-
-
 def test_simulation():
     graph = nx.path_graph(5)
     sm = Simulation(embedding_graph=graph, process_type=Process, channel_type=Channel)
