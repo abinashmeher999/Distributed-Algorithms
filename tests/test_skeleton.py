@@ -3,9 +3,8 @@
 import asyncio
 import pytest
 
-from distalg.skeleton import fib
 import networkx as nx
-from distalg import Process, Channel, Simulation, Message, dispatch
+from distalg import Process, Channel, Simulation, Message, dispatch, job, only_after
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -34,11 +33,13 @@ class EchoProcess(Process):
         self.is_initiator = False
         self.log = logging.getLogger('echo')
 
+    @job
     async def start(self):
         self.log.debug(self.id + " started.")
         if self.is_initiator:
             await asyncio.wait([channel.send(EchoToken(self.id)) for channel in self.out_channels])
 
+    @only_after(start)
     @dispatch(EchoToken, Channel)
     async def on_receive(self, msg, channel):
         self.rec_p += 1
@@ -62,3 +63,4 @@ def test_echo():
         break
 
     sm.run()
+    assert 0

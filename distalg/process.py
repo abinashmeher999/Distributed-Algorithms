@@ -1,8 +1,29 @@
+import asyncio
 import shortuuid
 from multipledispatch import dispatch
 from distalg.message import Message
 from distalg.channel import UnreliableDelayedChannel
+from functools import wraps
 
+
+class job(object):
+    def __init__(self, func):
+        self.event = asyncio.Event()
+        self.func = func
+
+    async def __call__(self, *args, **kwargs):
+        await self.func(*args, **kwargs)
+        self.event.set()
+
+@dispatch(job)
+def only_after(job_obj):
+    def wrap(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            await job_obj.event.wait()
+            return await func(*args, **kwargs)
+        return wrapper
+    return wrap
 
 class Process(object):
     def __init__(self, pid=None):
