@@ -3,6 +3,19 @@ import random
 
 
 class UnreliableDelayedChannel:
+    class PoppedMsgsAsyncIterable:
+        def __init__(self, outer_instance):
+            self.outer = outer_instance
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            return await self.outer.started.get()
+
+    def obtain_msgs(self):
+        return UnreliableDelayedChannel.PoppedMsgsAsyncIterable(self)
+
     def __init__(self,
                  delay_mean=100,
                  delay_std_dev=10,
@@ -22,6 +35,7 @@ class UnreliableDelayedChannel:
         self._out_end = None  # The process receiving messages from the channel
         self.delay_mean = delay_mean
         self.delay_std_dev = delay_std_dev
+        self.started = asyncio.Queue()
         self.in_transit = set()
         self.reached = set()
         self.min_delay = min_delay
@@ -41,7 +55,7 @@ class UnreliableDelayedChannel:
     def back(self):
         return self._back
 
-    async def __deliver(self, message, process):
+    async def __deliver(self, message):
         """
         :param message: The Message object to be delivered
         :return:
@@ -50,15 +64,22 @@ class UnreliableDelayedChannel:
         if sample >= self.reliability:
             return
         self.in_transit.add(message)
+
         # delay time in milliseconds
         delay_time = random.gauss(self.delay_mean, self.delay_std_dev)
         clamped_delay_time = min(self.max_delay, max(self.min_delay, delay_time))
-        asyncio.sleep(clamped_delay_time / 1000)  # asyncio.sleep expects in seconds
+        await asyncio.sleep(clamped_delay_time / 1000)  # asyncio.sleep expects in seconds
+
         self.in_transit.remove(message)
-        await process.on_receive(message, self)
+        await self._out_end.incoming_msgs.put(message)
+
+    async def start(self):
+        async for msg in self.obtain_msgs():
+            await self.__deliver(msg)
 
     async def send(self, message):
-        await self.__deliver(message, self.out_end)
+        message._channel = self
+        await self.started.put(message)
 
 
 class DelayedChannel(UnreliableDelayedChannel):
@@ -87,13 +108,14 @@ class Channel(DelayedChannel):
     def __init__(self):
         super(Channel, self).__init__(0, 0, 0, 0)
 
-    async def __deliver(self, message, process):
-        await process.on_receive(message, self)
+    async def __deliver(self, message):
+        self._out_end.incoming_msgs.put(message)
+        # await process.on_receive(message, self)
 
 
 class UnreliableDelayedFIFOChannel(UnreliableDelayedChannel):
     def __init__(self, *args, **kwargs):
         super(UnreliableDelayedFIFOChannel, self).__init__(*args, **kwargs)
 
-    def __deliver(self, message, process):
+    def __deliver(self, message):
         raise NotImplementedError

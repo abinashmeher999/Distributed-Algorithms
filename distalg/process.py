@@ -2,40 +2,40 @@ import asyncio
 import shortuuid
 from multipledispatch import dispatch
 from distalg.message import Message
-from distalg.channel import UnreliableDelayedChannel
-from functools import wraps
 
-
-class job(object):
-    def __init__(self, func):
-        self.event = asyncio.Event()
-        self.func = func
-
-    async def __call__(self, *args, **kwargs):
-        await self.func(*args, **kwargs)
-        self.event.set()
-
-@dispatch(job)
-def only_after(job_obj):
-    def wrap(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            await job_obj.event.wait()
-            return await func(*args, **kwargs)
-        return wrapper
-    return wrap
 
 class Process(object):
+    class ReceiverAsyncIterable:
+        def __init__(self, outer_instance):
+            self.outer = outer_instance
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            return await self.outer.incoming_msgs.get()
+
+    def _receive_msgs_creator(self):
+        def _receive_msgs():
+            return Process.ReceiverAsyncIterable(self)
+        return _receive_msgs
+
     def __init__(self, pid=None):
         self._id = pid or shortuuid.uuid()
         self.in_channels = []
         self.out_channels = []
+        self.incoming_msgs = asyncio.Queue()
+        self.receive_msgs = self._receive_msgs_creator()
 
-    async def start(self):
+    async def process_messages(self):
+        async for msg in self.receive_msgs():
+            await self.on_receive(msg)
+
+    async def run(self):
         pass
 
-    @dispatch(Message, UnreliableDelayedChannel)
-    async def on_receive(self, msg, channel):
+    @dispatch(Message)
+    async def on_receive(self, msg):
         pass
 
     @property
