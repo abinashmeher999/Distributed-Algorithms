@@ -32,11 +32,11 @@ class Process(object):
             await self.on_receive(msg)
 
     async def run(self):
-        pass
+        raise NotImplementedError
 
     @dispatch(Message)
     async def on_receive(self, msg):
-        pass
+        raise NotImplementedError
 
     @property
     def id(self):
