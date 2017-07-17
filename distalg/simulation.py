@@ -5,10 +5,9 @@ from distalg.channel import Channel
 
 
 class Simulation:
-    def __init__(self, embedding_graph=None, process_type=Process, channel_type=Channel, timeout=10.0):
+    def __init__(self, embedding_graph=None, process_type=Process, channel_type=Channel):
 
         self.graph = nx.Graph(embedding_graph)
-        self.timeout = timeout
         self.process_map = {}
         self.node_map = {}
         self.channel_map = {}
@@ -59,10 +58,10 @@ class Simulation:
     def processes_iter(self):
         yield from self.node_map  # node map is a dict process: node, this iterates over all the keys i.e. processes
 
-    def run(self):
+    def run(self, quit_after=10.0):
         try:
             loop = asyncio.get_event_loop()
-            loop.call_later(self.timeout, self.stop_all)
+            loop.call_later(quit_after, self.stop_all)
             loop.run_until_complete(self.start_all())
         except RuntimeError:
             pass
