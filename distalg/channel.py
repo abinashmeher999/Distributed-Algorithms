@@ -109,8 +109,7 @@ class Channel(DelayedChannel):
         super(Channel, self).__init__(0, 0, 0, 0)
 
     async def __deliver(self, message):
-        self._out_end.incoming_msgs.put(message)
-        # await process.on_receive(message, self)
+        await self._out_end.incoming_msgs.put(message)
 
 
 class UnreliableDelayedFIFOChannel(UnreliableDelayedChannel):
