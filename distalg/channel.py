@@ -1,8 +1,14 @@
 import asyncio
 import random
-
+from distalg.message import Message
+from multipledispatch import dispatch
 
 class UnreliableDelayedChannel:
+    class TerminateToken(Message):
+        def __init__(self):
+            super(UnreliableDelayedChannel.TerminateToken, self).__init__()
+
+
     class PoppedMsgsAsyncIterable:
         def __init__(self, outer_instance):
             self.outer = outer_instance
@@ -75,11 +81,16 @@ class UnreliableDelayedChannel:
 
     async def start(self):
         async for msg in self.obtain_msgs():
+            if isinstance(msg, UnreliableDelayedChannel.TerminateToken):
+                return
             await self.__deliver(msg)
 
     async def send(self, message):
         message._channel = self
         await self.started.put(message)
+
+    async def close(self):
+        await self.started.put(UnreliableDelayedChannel.TerminateToken())
 
 
 class DelayedChannel(UnreliableDelayedChannel):
