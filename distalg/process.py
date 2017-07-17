@@ -3,6 +3,14 @@ import shortuuid
 from multipledispatch import dispatch
 from distalg.message import Message
 
+import wrapt
+
+
+@wrapt.decorator
+async def main(wrapped, instance, args, kwargs):
+    await wrapped(*args, **kwargs)
+    await asyncio.wait([channel.close() for channel in instance.out_channels])
+
 
 class Process(object):
     class ReceiverAsyncIterable:
@@ -36,7 +44,7 @@ class Process(object):
 
     @dispatch(Message)
     async def on_receive(self, msg):
-        raise NotImplementedError
+        pass
 
     @property
     def id(self):
