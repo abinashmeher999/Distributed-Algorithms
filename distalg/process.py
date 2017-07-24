@@ -35,6 +35,13 @@ class Process(object):
         self.incoming_msgs = asyncio.Queue()
         self.receive_msgs = self._receive_msgs_creator()
 
+    async def receive_a_msg(self):
+        """
+        A blocking method that waits till a message is received and returns that
+        :return: the received message
+        """
+        return await self.incoming_msgs.get()
+
     async def process_messages(self):
         async for msg in self.receive_msgs():
             await self.on_receive(msg)
