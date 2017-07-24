@@ -56,23 +56,21 @@ class TerminatingEchoProcess(Process):
             await asyncio.wait([channel.send(EchoToken(self.id)) for channel in self.out_channels])
             last_val = None
             while self.rec_p < len(self.in_channels):
-                async for msg in self.receive_msgs():
-                    self.rec_p += 1
-                    last_val = msg.value
-                    break
+                msg = await self.receive_a_msg()
+                self.rec_p += 1
+                last_val = msg.value
             self.log.debug('Process: ' + self.id + ' : ' + last_val)  # Decide Operation
         else:
             last_val = None
             while self.rec_p < len(self.in_channels):
-                async for msg in self.receive_msgs():
-                    channel = msg.carrier
-                    self.rec_p += 1
-                    if self.father is None:
-                        self.father = channel.back
-                        await asyncio.wait(
-                            [ch.send(EchoToken(msg.value)) for ch in self.out_channels if ch is not self.father])
-                    last_val = msg.value
-                    break
+                msg = await self.receive_a_msg()
+                channel = msg.carrier
+                self.rec_p += 1
+                if self.father is None:
+                    self.father = channel.back
+                    await asyncio.wait(
+                        [ch.send(EchoToken(msg.value)) for ch in self.out_channels if ch is not self.father])
+                last_val = msg.value
             self.log.debug('Process: ' + self.id + ' : ' + last_val)  # Decide Operation
             await self.father.send(EchoToken(last_val))
         return
