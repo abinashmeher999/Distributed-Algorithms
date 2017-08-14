@@ -43,8 +43,8 @@ class Simulation:
                     channel._back = rev_channel
                     rev_channel._back = channel
 
-                process_n.out_channels.append(channel)
-                process_nbr.in_channels.append(channel)
+                process_n.out_channels.add(channel)
+                process_nbr.in_channels.add(channel)
 
     async def start_all(self):
         self.tasks += [asyncio.ensure_future(process.run()) for process in self.node_map] \
