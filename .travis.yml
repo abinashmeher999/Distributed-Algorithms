@@ -11,6 +11,8 @@ addons:
     packages:
       - git
       - python-pip
+env:
+  - export PYTHONPATH=/home/travis/build/ayuhsya/Distributed-Algorithms
 install:
   - pip install -r requirements.txt
 before_script:
