@@ -6,14 +6,6 @@ sudo: false
 language: python
 python:
     - "3.5"
-virtualenv:
-  system_site_packages: true
-env:
-  matrix:
-    - DISTRIB="ubuntu" PYTHON_VERSION="2.7" COVERAGE="true"
-    - DISTRIB="conda" PYTHON_VERSION="2.7" COVERAGE="false"
-    - DISTRIB="conda" PYTHON_VERSION="3.3" COVERAGE="false"
-    - DISTRIB="conda" PYTHON_VERSION="3.4" COVERAGE="false"
 addons:
   apt:
     packages:
