@@ -75,6 +75,7 @@ class Process(object):
         """
         process_instance.in_channels = self.in_channels
         process_instance.out_channels = self.out_channels
+        process_instance.incoming_msgs = self.incoming_msgs
         process_instance._parent_state = self.state
         self.subroutines[name] = process_instance
 
