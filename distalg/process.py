@@ -33,8 +33,8 @@ class Process(object):
 
     def __init__(self, pid=None):
         self._id = pid or shortuuid.uuid()
-        self.in_channels = []
-        self.out_channels = []
+        self.in_channels = set()
+        self.out_channels = set()
         self.incoming_msgs = asyncio.Queue()
         self.receive_msgs = self._receive_msgs_creator()
         self.state = {}

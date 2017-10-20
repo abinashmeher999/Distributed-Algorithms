@@ -4,21 +4,16 @@
 
 sudo: false
 language: python
-virtualenv:
-  system_site_packages: true
-env:
-  matrix:
-    - DISTRIB="ubuntu" PYTHON_VERSION="2.7" COVERAGE="true"
-    - DISTRIB="conda" PYTHON_VERSION="2.7" COVERAGE="false"
-    - DISTRIB="conda" PYTHON_VERSION="3.3" COVERAGE="false"
-    - DISTRIB="conda" PYTHON_VERSION="3.4" COVERAGE="false"
+python:
+    - "3.5"
 addons:
   apt:
     packages:
       - git
       - python-pip
+env:
+  - export PYTHONPATH=$TRAVIS_BUILD_DIR
 install:
-  - source tests/travis_install.sh
   - pip install -r requirements.txt
 before_script:
   - git config --global user.email "you@example.com"
